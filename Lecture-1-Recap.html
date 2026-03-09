@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>R Concepts — Dark Slides</title>
+  <style>
+    :root{
+      --bg:#08111f;
+      --bg2:#0e1a2f;
+      --panel:#101d33cc;
+      --panel-strong:#0f1a2dcc;
+      --text:#edf3ff;
+      --muted:#9fb3d1;
+      --r:#276dc3;
+      --rstudio:#75aadb;
+      --posit:#447099;
+      --line:#213452;
+      --glow:rgba(117,170,219,.22);
+      --good:#7fe3b7;
+      --warn:#ffd166;
+    }
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      height:100%;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(39,109,195,.22), transparent 28%),
+        radial-gradient(circle at 85% 18%, rgba(68,112,153,.15), transparent 25%),
+        linear-gradient(180deg, #091221 0%, #07101d 100%);
+      color:var(--text);
+      font-family: Consolas, "Lucida Console", "Courier New", monospace;
+    }
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.35));
+      pointer-events:none;
+    }
+    .deck{height:100%; position:relative;}
+    .slide{
+      position:absolute; inset:0;
+      padding:76px 88px 72px;
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+      gap:28px;
+      opacity:0;
+      transform:translateX(28px) scale(.985);
+      transition:opacity .35s ease, transform .35s ease;
+      pointer-events:none;
+    }
+    .slide.active{
+      opacity:1;
+      transform:translateX(0) scale(1);
+      pointer-events:auto;
+    }
+    .brandbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+    }
+    .series{
+      color:var(--muted);
+      font-size:15px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+    }
+    .logos{display:flex; align-items:center; gap:14px;}
+    .logos img{
+      height:30px;
+      width:auto;
+      filter: drop-shadow(0 0 14px rgba(117,170,219,.15));
+      opacity:.95;
+    }
+    .posit-badge{
+      display:flex; align-items:center; gap:10px;
+      padding:6px 12px;
+      border:1px solid rgba(117,170,219,.25);
+      border-radius:999px;
+      background:rgba(10,20,36,.65);
+      color:#d8e7ff;
+      font-size:16px;
+      line-height:1;
+    }
+    .posit-mark{
+      width:16px; height:16px; border-radius:50%;
+      background:linear-gradient(135deg, #7fb2d9, #447099);
+      box-shadow:0 0 0 4px rgba(68,112,153,.18);
+    }
+    h1,h2{margin:0; line-height:1.08; font-weight:700;}
+    h1{font-size:64px; letter-spacing:-.04em; max-width:900px;}
+    h2{font-size:42px; letter-spacing:-.03em;}
+    .lead{
+      color:var(--muted);
+      font-size:24px;
+      max-width:840px;
+      line-height:1.5;
+    }
+    .content{display:grid; align-content:start; gap:24px;}
+    .hero{
+      display:grid;
+      grid-template-columns: 1.25fr .9fr;
+      gap:28px;
+      align-items:center;
+      min-height:0;
+    }
+    .hero-card,.panel,.mini{
+      background:linear-gradient(180deg, rgba(16,29,51,.9), rgba(9,17,30,.86));
+      border:1px solid rgba(117,170,219,.18);
+      border-radius:24px;
+      box-shadow:0 14px 40px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.03);
+    }
+    .hero-card{padding:34px 36px;}
+    .hero-right{display:grid; gap:18px;}
+    .stats{display:grid; gap:14px;}
+    .stat{
+      padding:20px 22px;
+      border-radius:18px;
+      background:rgba(7,14,25,.55);
+      border:1px solid rgba(117,170,219,.12);
+    }
+    .k{font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);}
+    .v{font-size:22px; margin-top:8px; line-height:1.35;}
+    .tiny{font-size:15px; color:var(--muted); line-height:1.5;}
+    .chiprow{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px;}
+    .chip{
+      display:inline-flex; align-items:center;
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(39,109,195,.14);
+      border:1px solid rgba(39,109,195,.22);
+      color:#d9e9ff;
+      font-size:18px;
+    }
+    .grid-2,.grid-3{display:grid; gap:20px;}
+    .grid-2{grid-template-columns:1fr 1fr;}
+    .grid-3{grid-template-columns:repeat(3,1fr);}
+    .panel{padding:24px 24px 20px;}
+    .panel h3,.mini h3{margin:0 0 12px; font-size:24px; letter-spacing:-.02em;}
+    .panel p,.mini p, li{font-size:20px; line-height:1.45; color:#dbe7fb;}
+    ul{margin:0; padding-left:22px;}
+    li+li{margin-top:10px;}
+    .mini{padding:20px;}
+    .operator-row{display:flex; gap:10px; flex-wrap:wrap;}
+    .op{
+      min-width:72px;
+      text-align:center;
+      padding:16px 0;
+      font-size:28px;
+      border-radius:16px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(117,170,219,.14);
+    }
+    .flow{
+      display:grid;
+      grid-template-columns: repeat(3,1fr);
+      gap:16px;
+      align-items:center;
+    }
+    .box{
+      padding:20px;
+      border-radius:18px;
+      border:1px solid rgba(117,170,219,.18);
+      background:rgba(8,15,26,.56);
+      min-height:118px;
+    }
+    .arrow{display:flex; justify-content:center; align-items:center; color:var(--rstudio); font-size:34px;}
+    .vector-strip{
+      display:grid;
+      grid-template-columns:repeat(6, minmax(0,1fr));
+      gap:10px;
+      margin-top:12px;
+    }
+    .cell{
+      padding:18px 0;
+      text-align:center;
+      border-radius:14px;
+      background:rgba(39,109,195,.12);
+      border:1px solid rgba(39,109,195,.22);
+      font-size:24px;
+    }
+    .matrix{
+      display:grid;
+      grid-template-columns:repeat(3,70px);
+      gap:10px;
+      justify-content:start;
+      margin-top:16px;
+    }
+    .matrix .cell{padding:16px 0; min-width:0;}
+    .footer{
+      display:flex; justify-content:space-between; align-items:center;
+      color:var(--muted); font-size:14px; letter-spacing:.08em; text-transform:uppercase;
+    }
+    .page{opacity:.75;}
+    .muted{color:var(--muted)}
+    .accent{color:#8bc2ff}
+    .good{color:var(--good)}
+    .warn{color:var(--warn)}
+    .big-idea{
+      font-size:30px;
+      line-height:1.35;
+      max-width:950px;
+      color:#f1f6ff;
+    }
+    .pillline{display:flex; gap:12px; flex-wrap:wrap;}
+    .pill{
+      padding:12px 16px;
+      border-radius:14px;
+      border:1px solid rgba(127,227,183,.2);
+      background:rgba(127,227,183,.08);
+      color:#ddfff0;
+      font-size:18px;
+    }
+    .center{align-self:center}
+    .small-note{font-size:17px; color:var(--muted);}
+    .no-bullets{padding-left:0; list-style:none;}
+    .no-bullets li{padding-left:0}
+    .kbd{padding:.15em .42em; border:1px solid rgba(255,255,255,.18); border-bottom-width:3px; border-radius:8px; background:rgba(255,255,255,.05);}
+    @media (max-width: 1100px){
+      .slide{padding:58px 42px 50px}
+      h1{font-size:48px}
+      h2{font-size:34px}
+      .lead{font-size:20px}
+      .panel p,.mini p,li{font-size:17px}
+      .hero{grid-template-columns:1fr}
+      .grid-3{grid-template-columns:1fr}
+      .vector-strip{grid-template-columns:repeat(3,1fr)}
+    }
+  </style>
+</head>
+<body>
+  <div class="deck">
+
+    <section class="slide active">
+      <div class="brandbar">
+        <div class="series">R foundations</div>
+        <div class="logos">
+          <img alt="R logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/R%20logo.svg">
+          <img alt="RStudio logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/RStudio%20logo%20flat.svg">
+          <div class="posit-badge" aria-label="Posit logo"><span class="posit-mark"></span><span>Posit</span></div>
+        </div>
+      </div>
+
+      <div class="content hero center">
+        <div class="hero-card">
+          <div class="series">chapter overview</div>
+          <h1>Understanding how R thinks about data</h1>
+          <p class="lead">A short tour of <span class="accent">numbers</span>, <span class="accent">assignment</span>, <span class="accent">vectors</span>, <span class="accent">matrices</span>, <span class="accent">arrays</span>, and <span class="accent">non-numeric types</span>.</p>
+          <div class="chiprow">
+            <span class="chip">numeric</span>
+            <span class="chip">vectorized</span>
+            <span class="chip">indexed</span>
+            <span class="chip">typed</span>
+          </div>
+        </div>
+        <div class="hero-right">
+          <div class="stat">
+            <div class="k">main mindset</div>
+            <div class="v">Think in <span class="good">whole objects</span>, not one value at a time.</div>
+          </div>
+          <div class="stat">
+            <div class="k">most important structure</div>
+            <div class="v">In R, many things start as a <span class="accent">vector</span>.</div>
+          </div>
+          <div class="stat">
+            <div class="k">navigate</div>
+            <div class="v">Use <span class="kbd">→</span> <span class="kbd">←</span> or <span class="kbd">space</span>.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer"><span></span><span class="page">01</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="brandbar">
+        <div class="series">1 // numerics & arithmetic</div>
+        <div class="logos">
+          <img alt="R logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/R%20logo.svg">
+          <img alt="RStudio logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/RStudio%20logo%20flat.svg">
+          <div class="posit-badge"><span class="posit-mark"></span><span>Posit</span></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <h2>R can act like a scientific calculator</h2>
+        <div class="grid-2">
+          <div class="panel">
+            <h3>Core arithmetic ideas</h3>
+            <div class="operator-row">
+              <div class="op">+</div>
+              <div class="op">−</div>
+              <div class="op">×</div>
+              <div class="op">÷</div>
+              <div class="op">^</div>
+            </div>
+            <p>R follows the usual order of operations. Parentheses change the order. Functions like <span class="accent">sqrt()</span>, <span class="accent">log()</span>, and <span class="accent">exp()</span> extend simple arithmetic into mathematical computing.</p>
+          </div>
+          <div class="panel">
+            <h3>What matters conceptually</h3>
+            <ul>
+              <li>Numbers in R are values you can compute with immediately.</li>
+              <li>Many mathematical functions are built in.</li>
+              <li>Large and tiny values may appear in <span class="accent">scientific notation</span>.</li>
+            </ul>
+            <p class="small-note">Example idea: <span class="good">5.1e3</span> means <span class="good">5100</span>.</p>
+          </div>
+        </div>
+        <div class="big-idea"><span class="accent">R is designed for numerical thinking</span> — from simple arithmetic to statistical and scientific calculation.</div>
+      </div>
+
+      <div class="footer"><span>use numbers, functions, notation</span><span class="page">02</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="brandbar">
+        <div class="series">2 // assignment & objects</div>
+        <div class="logos">
+          <img alt="R logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/R%20logo.svg">
+          <img alt="RStudio logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/RStudio%20logo%20flat.svg">
+          <div class="posit-badge"><span class="posit-mark"></span><span>Posit</span></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <h2>Assignment means “store this result under a name”</h2>
+        <div class="flow">
+          <div class="box">
+            <div class="k">compute</div>
+            <p>Start with a value or expression.</p>
+          </div>
+          <div class="arrow">→</div>
+          <div class="box">
+            <div class="k">assign</div>
+            <p>Give it a name with <span class="accent">&lt;-</span>.</p>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="panel">
+            <h3>Why assignment matters</h3>
+            <ul>
+              <li>You can reuse results later.</li>
+              <li>You can build more complex calculations step by step.</li>
+              <li>Your workspace becomes a collection of named objects.</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <h3>Useful mental model</h3>
+            <p>Think of R as a lab bench:</p>
+            <ul class="no-bullets">
+              <li><span class="accent">object</span> = a labeled container</li>
+              <li><span class="accent">name</span> = how you refer to it</li>
+              <li><span class="accent">assignment</span> = placing something in that container</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer"><span>compute once, reuse often</span><span class="page">03</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="brandbar">
+        <div class="series">3 // vectors</div>
+        <div class="logos">
+          <img alt="R logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/R%20logo.svg">
+          <img alt="RStudio logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/RStudio%20logo%20flat.svg">
+          <div class="posit-badge"><span class="posit-mark"></span><span>Posit</span></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <h2>The vector is the basic building block in R</h2>
+        <div class="grid-2">
+          <div class="panel">
+            <h3>What a vector is</h3>
+            <p>An ordered one-dimensional collection of values.</p>
+            <div class="vector-strip">
+              <div class="cell">12.1</div>
+              <div class="cell">13.0</div>
+              <div class="cell">11.8</div>
+              <div class="cell">14.2</div>
+              <div class="cell">13.7</div>
+              <div class="cell">…</div>
+            </div>
+            <p class="small-note">This could represent temperatures, scores, ages, or measurements.</p>
+          </div>
+          <div class="panel">
+            <h3>Why vectors matter</h3>
+            <ul>
+              <li>R is <span class="accent">vector-oriented</span>.</li>
+              <li>Many functions work on the whole vector at once.</li>
+              <li>Summary functions like mean, sum, and sort become very natural.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="pillline">
+          <span class="pill">Create values together</span>
+          <span class="pill">Process many values at once</span>
+          <span class="pill">Keep order and position</span>
+        </div>
+      </div>
+
+      <div class="footer"><span>think lists of same-kind values</span><span class="page">04</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="brandbar">
+        <div class="series">4 // indexing, subsetting, recycling</div>
+        <div class="logos">
+          <img alt="R logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/R%20logo.svg">
+          <img alt="RStudio logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/RStudio%20logo%20flat.svg">
+          <div class="posit-badge"><span class="posit-mark"></span><span>Posit</span></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <h2>Vectors are useful because you can select and transform parts of them</h2>
+        <div class="grid-3">
+          <div class="mini">
+            <h3>[ ] means “take pieces”</h3>
+            <p>Use positions to extract one element, many elements, or everything except some elements.</p>
+          </div>
+          <div class="mini">
+            <h3>Logical filtering</h3>
+            <p>Conditions create <span class="accent">TRUE/FALSE</span> flags that let you keep only matching values.</p>
+          </div>
+          <div class="mini">
+            <h3>Recycling rule</h3>
+            <p>When lengths do not match, R may repeat shorter values across a longer vector.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Important mindset</h3>
+          <p>You are usually not looping mentally through values one by one. Instead, you tell R: <span class="good">“apply this operation to the entire object”</span> or <span class="good">“keep only the elements that satisfy this condition.”</span></p>
+          <p class="small-note"><span class="warn">Watch out:</span> recycling is powerful, but if lengths do not align nicely it can create warnings and mistakes.</p>
+        </div>
+      </div>
+
+      <div class="footer"><span>extract, filter, replace</span><span class="page">05</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="brandbar">
+        <div class="series">5 // matrices & arrays</div>
+        <div class="logos">
+          <img alt="R logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/R%20logo.svg">
+          <img alt="RStudio logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/RStudio%20logo%20flat.svg">
+          <div class="posit-badge"><span class="posit-mark"></span><span>Posit</span></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <h2>Matrices and arrays are vectors with dimensions</h2>
+        <div class="grid-2">
+          <div class="panel">
+            <h3>Matrix = 2D structure</h3>
+            <p>A matrix organizes values into rows and columns.</p>
+            <div class="matrix">
+              <div class="cell">1</div><div class="cell">2</div><div class="cell">3</div>
+              <div class="cell">4</div><div class="cell">5</div><div class="cell">6</div>
+              <div class="cell">7</div><div class="cell">8</div><div class="cell">9</div>
+            </div>
+            <p class="small-note">You can extract rows, columns, diagonals, or single cells.</p>
+          </div>
+          <div class="panel">
+            <h3>Array = 3D or more</h3>
+            <ul>
+              <li>Same idea as a matrix, but with extra dimensions.</li>
+              <li>Useful for layered data, repeated blocks, or higher-dimensional structures.</li>
+              <li>Subsetting still follows the same indexing logic.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="mini">
+            <h3>Two kinds of operations</h3>
+            <p><span class="accent">Element-wise</span> operations act on each entry separately. <span class="accent">Matrix algebra</span> uses linear algebra rules, like transpose, multiplication, and inverse.</p>
+          </div>
+          <div class="mini">
+            <h3>Key mental shift</h3>
+            <p>A matrix is not just “many numbers.” It has <span class="good">shape</span> — and that shape controls what operations are valid.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer"><span>shape matters</span><span class="page">06</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="brandbar">
+        <div class="series">6 // non-numeric values</div>
+        <div class="logos">
+          <img alt="R logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/R%20logo.svg">
+          <img alt="RStudio logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/RStudio%20logo%20flat.svg">
+          <div class="posit-badge"><span class="posit-mark"></span><span>Posit</span></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <h2>R also works with logical, character, and factor data</h2>
+        <div class="grid-3">
+          <div class="mini">
+            <h3>Logical</h3>
+            <p><span class="accent">TRUE</span> and <span class="accent">FALSE</span> drive conditions, comparisons, and filtering.</p>
+          </div>
+          <div class="mini">
+            <h3>Character</h3>
+            <p>Text values are stored as strings. They are not numbers, even if they look numeric.</p>
+          </div>
+          <div class="mini">
+            <h3>Factor</h3>
+            <p>Factors represent categories, often with a fixed set of levels and sometimes a natural order.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Why these types matter</h3>
+          <ul>
+            <li>Data analysis is not only about calculations.</li>
+            <li>You often need to compare, label, group, and classify values.</li>
+            <li>R’s data types help you express the meaning of the data, not just its appearance.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer"><span>type influences behavior</span><span class="page">07</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="brandbar">
+        <div class="series">7 // takeaways</div>
+        <div class="logos">
+          <img alt="R logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/R%20logo.svg">
+          <img alt="RStudio logo" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/RStudio%20logo%20flat.svg">
+          <div class="posit-badge"><span class="posit-mark"></span><span>Posit</span></div>
+        </div>
+      </div>
+
+      <div class="content center">
+        <h2>A compact mental map of early R</h2>
+        <div class="hero-card">
+          <div class="big-idea">
+            <span class="accent">numbers</span> → stored as <span class="accent">objects</span> → grouped into <span class="accent">vectors</span> → shaped into <span class="accent">matrices / arrays</span> → filtered and described with <span class="accent">logical</span>, <span class="accent">character</span>, and <span class="accent">factor</span> values.
+          </div>
+          <div class="chiprow" style="margin-top:24px">
+            <span class="chip">R is vectorized</span>
+            <span class="chip">indexes matter</span>
+            <span class="chip">data types matter</span>
+            <span class="chip">dimensions matter</span>
+          </div>
+        </div>
+        <div class="lead" style="font-size:22px">If students understand these ideas, the code becomes much easier to read and write.</div>
+      </div>
+
+      <div class="footer"><span>concepts first, syntax second</span><span class="page">08</span></div>
+    </section>
+
+  </div>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    let index = 0;
+    function show(i){
+      index = (i + slides.length) % slides.length;
+      slides.forEach((s, idx) => s.classList.toggle('active', idx === index));
+    }
+    document.addEventListener('keydown', (e) => {
+      if (["ArrowRight","PageDown"," ","Spacebar"].includes(e.key)) { e.preventDefault(); show(index + 1); }
+      if (["ArrowLeft","PageUp","Backspace"].includes(e.key)) { e.preventDefault(); show(index - 1); }
+      if (e.key === 'Home') { show(0); }
+      if (e.key === 'End') { show(slides.length - 1); }
+    });
+    document.addEventListener('click', (e) => {
+      const x = e.clientX / window.innerWidth;
+      show(index + (x > 0.5 ? 1 : -1));
+    });
+  </script>
+</body>
+</html>
