@@ -1,0 +1,790 @@
+---
+title: "stringr and dplyr"
+author: "Lusine Zilfimian"
+date: |
+     `r format(Sys.Date(), '%B %d (%A),  %Y')`
+output: 
+    beamer_presentation:
+      theme: "AnnArbor"
+      colortheme: "beaver"
+      fonttheme: "structurebold"
+      incremental: True
+      fig_width: 5.5
+      fig_height: 3.5
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+pacman::p_load(ggplot2, ggthemes, FNN, dplyr, stringr, RColorBrewer, wordcloud)
+```
+
+# Contents
+
+ * Intro Glossary
+ * String Manipulation
+ * Stringr vs Base
+ * RegEx
+ 
+ ---
+ 
+# Bibliography 
+
+ * See on GitHub: Handling and Processing Strings 
+ * Character Strings - Chapter 2
+ * String Manipulation + stringr - Chapter 3, 4
+ * RegEx - Chapter 5
+ 
+ ---
+ 
+# Intro Glossary
+
+ * String manipulation - series of functions used to extract information from text variables.
+ 
+ * **Regex** is set of commands used to match a family of text (alphanumeric, digits, words) to detect string sequences in a large text data. 
+ 
+ * *Regular expressions* to do more complicated tasks such as extract email IDs or date from a set of text.
+
+ * String manipulation functions are not customized however we can customize regular expressions in any way we want.
+ 
+#  String Manipulation
+
+ * We can create strings with either single quotes or double quotes. 
+ 
+ * Unlike other languages, there is no difference in behavior. 
+ 
+ * To include a literal single or double quote in a string you can use `\` to escape it.
+ 
+```{r}
+(x <- "This is my first character!") # double quotes 
+
+class(x) == typeof(x)
+(x <- 'This is my second string') # single quotes
+
+(x <- "Why do we need the 'python'?")
+
+(x <- 'Why do we need the "python"?')
+```
+
+ ---
+
+## Working with strings
+
+ * If you try to include single quotes within single quotes, or double quotes within double quotes, it will not work
+
+```{r error=TRUE}
+# Something went wrong
+"Why call langauge "python" ? "
+'Why call langauge 'python' ? '
+```
+
+ *  `\` escaping character
+ 
+```{r}
+(x <- 'Why do we need the \'python\'?')
+is.character(x)
+
+"Why do we need the \"python\"?"
+```
+
+ ---
+
+```{r}
+length(character(0))
+length("")
+length(character(1))
+a = character(3)
+a[2] <- "Something"
+length(a)
+```
+ ---
+ 
+* Mixing different type of objects
+
+```{r}
+# vector with numbers and characters
+c(1:5, pi, "text")
+#  matrix with numbers and characters
+rbind(1:5, letters[1:5])
+# dataframe withnumbers andcharacters
+df1 =data.frame(numbers= 1:5,letters = letters[1:5])
+str(df1)
+# listwith elements of different mode
+list(1:5,letters[1:5], rnorm(5))
+```
+ 
+ ---
+
+* Paste() and its arguments 
+* Takes or more R objects, conver them to character and then concatenates them to character (one or more)
+* Element wise concatenation of two vectors 
+ 
+```{r}
+x <- 1:26
+(a <- LETTERS[x[1:13]])
+(b <- letters[x[14:26]])
+```
+
+ ---
+
+
+```{r}
+(char1 <- paste(x, c(a, b)))
+length(char1)
+```
+
+ * sep = The element which separates every term. 
+ * collapse = The element which separates every result.
+
+
+```{r}
+paste(x, c(a, b), sep = " - is - ") # optional - Define your own separator
+(char2 <- paste(x, c(a, b), sep = " - is - ", collapse = " , ")) # optional -  if you want all the terms to be collapsed into a single string
+length(char1); length(char2)
+```
+
+\tiny difference between `paste` and `paste0` function - `paste0` does not have the argument sep, and it concatenates the stings objects without spaces. 
+ 
+ 
+```{r}
+paste("Life of", pi)
+paste("Life of", pi, sep = "-")
+paste("Life of", pi, sep = "-", collapse = ",")
+
+paste(c("Life of", "Other"), c(pi, 9), sep = "-", collapse = " ,")
+paste("X", 1:5, sep= ".")
+paste("thevalue of 'e' is", exp(1), NA) # problem
+?paste0
+cat("Life of", pi)
+x <- paste("Life of", pi)
+```
+
+ * C-stylestringformattingwithsprintf()
+ 
+```{r}
+# decimal notationwith 3 decimal digits
+sprintf("%.3f",pi)
+# with sign(positive)
+sprintf("%+f",pi)
+?sprintf
+#+ stings
+```
+
+ ---
+
+# Basic Sting manipulations (Base)
+
+ * nchar() counts the number of characters (including whitespaces) 
+ * for single character
+ 
+ 
+```{r}
+nchar("Here are 16 chars:)")
+char1
+char2
+length(char2)
+nchar(char1)
+```
+
+ ---
+ 
+ * We can convert all characters of our string to lower case with the `tolower` command
+ 
+ * and to upper case with `toupper`
+
+```{r}
+toupper("Here are 16 chars:)")
+tolower(toupper("Here are 16 chars:)"))
+
+chartr(old = "is", new = "is not", char2) # the size should be equal
+chartr(old = "is", new = "no", char2) 
+
+
+txt <- "Café Münchner Kindl"
+clean <- chartr("áéíóúñüäö", "aeiounuao", tolower(txt))
+clean
+```
+
+ ---
+
+# Substring + replacement based on the positions
+
+ *  substr() and substring()
+ *  These function can be used to overwrite or replace a part of character string.
+
+```{r}
+x <- "Lusine Zilfimian"
+substr(x, start = 8, stop = 7 + 5) 
+substring(x, first = 8) #  last = 1000000L
+substr(x, start = 14, stop = 14) <- "y"  
+x
+```
+
+ ---
+ 
+# Replacement and detection
+
+```{r}
+sub("Lusine Zilfimian", pattern = "i", replacement = "y") # find and replace
+gsub("Lusine Zilfimian", pattern = "i", replacement = "y")
+
+grep(pattern = "Lusine", x =  c("Lusine Zilfimian", "David", "Mar")) #detect
+grepl(pattern = "Lusine", x = c("Lusine Zilfimian", "David", "Mar"))
+```
+```{r}
+# Vectors
+x <- c("ID1", "ID2", "ID2", "ID3", "ID5")
+y <- c("ID2", "ID3", "ID4", "ID4", "ID6")
+
+# Set union vs intersection vs difference
+union(x, y)         # unique in x ∪ y
+intersect(x, y)     # unique in x ∩ y
+setdiff(x, y)       # unique in x \ y
+setequal(x, y)      # TRUE (same unique elements)
+identical(x, y)     # FALSE (order/length differ)
+is.element("ID1",y)
+```
+ ---
+
+## Why is `base` not enough?
+ 
+ * The object `NULL` have zero length, yet when included inside `paste()` they are treated as an empty string:
+
+```{r}
+#c("one", "two", "three", NA, "five") - previous version
+paste("This", "is", NULL, NULL, NULL, NULL, "value")
+length(NULL)
+length(character(0))
+
+stringr::str_c("This", "is", NULL, NULL, NULL, NULL,  "value", sep = " ")
+```
+
+ * `str_c()` – zero argument are silently removed
+ 
+ ---
+
+# Stingr 
+
+ * All functions start with str_
+ * All functions take a vector of strings as the first argument
+
+ * `str_sub` works the same way as `substr()` but allows for negative subsetting as well
+
+```{r}
+library(stringr)
+str_sub("Joe Satriani", start = 5)
+str_sub("Joe Satriani", start = 5, end = 5+4)
+str_sub("Joe Satriani", start = -8, end = -4)
+```
+
+ ---
+
+ * `str_detect()` - For detecting whether a pattern is present (or absent) in a string vector. You get a TRUE if a match is detected in a string, FALSE otherwise
+ 
+ * `str_subset()` - Keep strings matching a pattern
+ 
+ * `str_count()` - Count the number of matches in a string
+ 
+ * `str_split()` - Similar to `strsplit()` to separate a character vector into a number of pieces
+ 
+ * `str_replace()` - For replacing the first occurrence of a matched pattern in a string
+ 
+ * `str_exctact()` - For extracting a string containing a pattern 
+
+\tiny detect - bolean, extract – only pattern, subset – all the text.
+
+ ---
+ 
+# Examples
+ 
+```{r}
+(geners <- c("Action, Adventure, Comedy",
+             "Comedy",
+             "Comedy, Drama, Drama, Romance", 
+              "Crime, Drama, History", "Action 2"))
+
+str_detect(string = geners,  pattern = "Drama")
+str_subset(string = geners,  pattern = "Action")
+
+str <-c("123abd", "lz@yahoo.com", "Name567cd", "abc5.00", "lusinezilfimian@yahoo.com")
+str_subset(str, pattern="@yahoo\\.com")
+str_count(string = geners,  pattern = "Drama")
+```
+
+ ---
+ 
+# Examples
+ 
+
+```{r}
+geners
+str_replace(string = geners, pattern = ",", replacement = " &")
+sub(x = geners, pattern = ",", replacement = " &") # from base 
+gsub(x = geners, pattern = ",", replacement = " &") # from base 
+str_replace_all(string = geners, pattern = ",", replacement = " &")
+```
+
+ ---
+ 
+# Examples
+ 
+ 
+```{r}
+str_extract(string = geners, pattern = "Drama")
+str_extract_all(string = geners, pattern = "Drama", simplify = T)
+```
+
+ ---
+ 
+# Let's consider the example
+
+```{r}
+movies <- read.csv('movies3.csv', stringsAsFactors = F)
+View(movies)
+```
+
+## How many romcom movies are there? 
+
+```{r}
+movies$Comedy <- str_detect(string = movies$Genre, pattern = "Comedy") 
+movies$rom <- str_detect(string = movies$Genre, pattern = "Romance") 
+
+table(movies$Comedy,movies$rom)
+```
+
+ ---
+
+# Split string into pieces
+
+```{r}
+geners
+(gen_m <- str_split(geners, ",", simplify = T))
+trimws("  Lus    ine   ") # trim whitespaces
+str_trim("  Lus    ine   ")
+
+# somefactor
+some_factor= factor(c(1,1, 1,2, 2, 2),labels =c("good", "bad"))
+some_factor
+nchar(some_factor)
+str_length(some_factor)
+```
+
+```{r}
+# quote(by DouglasAdams)
+some_quote = c(
+"I may not havegone",
+"where I intendedto go,",
+"but I think Ihave endedup",
+"where I needed tobe")
+
+some_quote = paste(some_quote,collapse =" ")
+
+cat(str_wrap(some_quote,width =30))
+cat(str_wrap(some_quote,width =30, indent= 2))
+
+```
+
+```{r}
+# somesentence
+change= c("Be the change", "you want to be")
+# extract first word
+word(change,1)
+# extract second word
+word(change,2)
+```
+
+ ---
+ 
+# Regular Expressions
+
+  * Sequance of characters that define a search pattern
+  * For instance, one could have the following pattern: 2 digits, 2 letters and 4 digits
+  * ?regex - to see more
+  
+## Form of Regular Expressions
+  
+  * 1. Literal characters which are characters that match themselves
+  * 2. Metacharacters - any character that is not a literal character   . ^ $ + * ? \ | (), {}, [], -
+  * 3. Sequences \d, \w, \W, \D 
+  * 4. Character classes [A-Z], [0-9]
+  * 5. Quantifiers {2}
+  * 6. POSIX character classes
+  
+  * If you want to match the metacharacter you need to use \\ (escapes) before the metacharacter
+
+ ---
+ 
+# Literal and Metacharacters 
+
+ * Literal character - the simplest form of regular expressions are those that match a single charact
+ * Metacharacters - special characters that have a reserved status:
+ 
+```{r}
+str <-c("Lusine1995^", "Say$1995-02(", "David.", "I*02", "I&95", "1995.27")
+str_subset(string = str,  pattern = "Lusine") # literal 
+```
+
+
+```{r}
+str_subset(string = str,  pattern = "Lusine|David|Say")
+```
+
+```{r}
+str_subset(string = "money$",  pattern = "money\\$")
+str_subset(string = "This is money23",  pattern = "money$")
+```
+
+# Metacharacters 
+
+```{r}
+str
+str_subset(string = str,  pattern = ".") # meta 
+str_subset(string = "\n",  pattern = ".") # meta
+str_subset(string = " ",  pattern = ".") # meta
+str_subset(string = "",  pattern = ".") # meta
+str_subset(string = str,  pattern = "\\.") # literal
+```
+
+ 
+# Metacharacters 
+ 
+```{r}
+str
+str_subset(string = str,  pattern = "^S") # meta
+str_subset(string = str,  pattern = "\\^") # literal
+str_subset(string = str,  pattern = "\\.") # literal
+
+# str_subset(string = c("'\a'", " '\\' "),  pattern = "'\'") # literal
+```
+
+
+# Sequences
+
+```{r}
+str_subset(string = c("123", "4L", "M"),  pattern = "\\d") # [0-9]
+str_subset(string = c("123", "4L", "M"),  pattern = "\\D") # [^0-9]
+
+str_subset(string = c(" ", "l   ", "l"),  pattern = "\\s") 
+str_subset(string = c(" ", "l ", "l"),  pattern = "\\S") 
+```
+
+# Character classes
+
+```{r}
+str
+str_subset(string = str,  pattern = "[0-9]")
+str_subset(string = str,  pattern = "[f-z]")
+str_subset(string = str,  pattern = "[a-zA-Z]")
+str_subset(string = str,  pattern = "[aeuio]")
+str_subset(string = c("AI", "ai"),  pattern = "[AEIOU]")
+```
+
+# Special meaning of ^
+
+ * Not in specified character 
+ 
+```{r}
+str_subset(string = c("ou", "lk"),  pattern = "[^aeuio]")
+str_subset(string = c("ou", "19", "-"),  pattern = "[a-zA-Z0-9]")
+str_subset(string = c("ou", "19", "-"),  pattern = "[a-zA-Z]")
+str_subset(string = c("ou", "19", "-"),  pattern = "[^0-9]")
+str_subset(string = str,  pattern = "[^1-9]")
+str_subset(string = c("T", "adfjh", "tdkfj", "TtT"),  pattern = "[tT]")
+```
+
+# Quantifiers
+
+```{r}
+str_subset(string = c(" ", "l   ", "l"),  pattern = "\\s+") 
+str_subset(string = c(" ", "l   ", "l"),  pattern = "\\s*") 
+str_subset(string = c(" ", "l   ", "l"),  pattern = "\\s?") 
+
+str_subset(string = c(" ", "l   ", "l"),  pattern = "\\s{3}")
+str_subset(string = c(" ", "l   ", "l"),  pattern = "\\s{2,}")
+```
+
+# POSIX character classes
+
+```{r}
+str_subset(string = str,  pattern = "[:alnum:]") # [a-zA-Z0-9]
+str_subset(string = str,  pattern = "[:alpha:]") # [a-zA-Z]
+str_subset(string = str,  pattern = "[:digit:]") # [0-9]
+str_subset(string = str,  pattern = "[:lower:]") # [a-z]
+```
+
+# POSIX character classes
+
+```{r}
+str_subset(string = str,  pattern = "[:upper:]") # [A-Z]
+str_subset(string = str,  pattern = "[:space:]") # [\f\n\r\t\v]
+str_subset(string = str,  pattern = "[:punct:]")
+```
+
+
+```{r}
+str_subset(string = c("grey", "gray"), pattern = "gr(e|a)y")
+```
+
+ ---
+ 
+# How many wins and nominations are there?
+
+```{r}
+movies$awards_num <- str_replace_all(movies$Awards, pattern="[^0-9]",
+  replacement = " ")
+
+movies$awards_num <- str_replace_all(movies$awards_num, pattern="\\s+",
+  replacement = " ")
+movies$Awards[1:10]
+movies$awards_num[1:10]
+```
+
+ ---
+ 
+# How many wins and nominations are there?
+
+```{r}
+movies$awards_num <- trimws(movies$awards_num)
+movies$awards_num[1:20]
+```
+
+```{r}
+x1 <- str_split(movies$awards_num, pattern = "\\s",simplify = T)
+x1 <- apply(x1, 2, as.numeric)
+x1 <- rowSums(x1, na.rm=T)
+x1[1:20]
+```
+
+ ---
+ 
+## Visualization 
+
+```{r}
+movies$awards_num <- x1
+ggplot(movies, aes(x = awards_num)) + geom_histogram() + 
+  xlim(c(0,100)) + labs(title = "Awards histogram (wins and nominations)",
+    x = "Awards", y = "Count")
+```
+
+ ---
+
+#  Wins only 
+
+ * Possible strings are ...
+ 
+```{r}
+m <- movies$Awards[1:20]
+m1 <- str_extract_all(movies$Awards, pattern="[0-9]+\\s+win", simplify = T)
+m1 <- str_remove_all(m1, pattern="[a-zA-Z]")
+m1 <- as.numeric(m1)
+movies$Wins <- m1
+head(m1)
+```
+
+
+ ---
+ 
+## Visualization 
+
+```{r}
+ggplot(movies, aes(x = Wins)) + geom_histogram() +
+  labs(title = "Wins histogram", x = "Wins", y = "Count")+
+  xlim(c(0,100))
+```
+
+# Dplyr - Grammar of data manipulation
+
+```{r}
+library(dplyr)
+library(nycflights13)  # flights dataset: columns include year, month, carrier, etc.
+library(tm)
+```
+
+
+
+
+```{r setup, message=FALSE, warning=FALSE}
+# Load packages
+library(dplyr)
+# Use mtcars with rownames as a column
+df <- as_tibble(mtcars, rownames = "model")
+```
+
+## Select / Rename / Relocate
+
+```{r}
+# Select specific columns and helpers
+s_select <- df |>
+  select(model, mpg, cyl, contains("p"))  # contains() picks columns with 'p'
+
+# Rename columns
+s_rename <- df |>
+  rename(horsepower = hp, gears = gear)
+```
+
+## Filter / Arrange
+
+```{r}
+# Row filtering with logical conditions
+f_basic <- df |>
+  filter(mpg > 25, cyl == 4)
+
+# if_any / if_all predicates across multiple columns
+f_if_any <- df |>
+  filter(if_any(c(mpg, hp), ~ . > 200))  # any of mpg or hp > 200
+
+f_if_all <- df |>
+  filter(if_all(c(cyl, gear), ~ . >= 4))  # all of cyl and gear >= 4
+
+# Range filtering
+f_between <- df |>
+  filter(between(mpg, 20, 25))
+
+# Sorting
+a_sort <- df |>
+  arrange(cyl, desc(mpg))
+```
+
+## Distinct / Deduplication
+
+```{r}
+# Unique combinations
+d_pairs <- df |>
+  distinct(cyl, gear)
+
+# Keep the first row per unique combination (retain all columns)
+d_keep_all <- df |>
+  distinct(cyl, gear, .keep_all = TRUE)
+```
+
+## Mutate / Transformations
+
+```{r}
+# Create new columns
+m_basic <- df |>
+  mutate(pwr = hp * drat, ratio = mpg / wt)
+
+# Conditional label
+m_case <- df |>
+  mutate(class = case_when(
+    hp >= 200 ~ "high",
+    hp >= 150 ~ "mid",
+    TRUE ~ "low"
+  ))
+
+
+# lead/lag and differences
+m_leadlag <- df |>
+  mutate(mpg_lead = lead(mpg),
+         mpg_lag  = lag(mpg),
+         mpg_diff = mpg - lag(mpg))
+
+# Cumulative sum by group
+m_cumsum_by_cyl <- df |>
+  mutate(cum_hp = cumsum(hp), .by = cyl)
+```
+
+
+## Summarise 
+
+```{r}
+# Global summary
+s_global <- df |>
+  summarise(mean_mpg = mean(mpg), sd_mpg = sd(mpg))
+```
+
+```{r}
+# Grouped summary (using .by for brevity)
+s_by_cyl <- df |>
+  summarise(n = n(),
+            models = n_distinct(model),
+            mean_mpg = mean(mpg),
+            .by = cyl)
+
+# Multiple quantiles by group
+s_quant <- df |>
+  summarise(q = quantile(mpg, c(.25, .5, .75)),
+            p = c("q25", "q50", "q75"),
+            .by = cyl)
+```
+
+## Slice Helpers
+
+```{r}
+# Top/bottom/sample rows
+sl_head <- df |> slice_head(n = 5)
+sl_tail <- df |> slice_tail(n = 5)
+sl_samp <- df |> slice_sample(n = 5)
+
+# Min/Max within groups
+sl_min_by <- df |> group_by(cyl) |> slice_min(mpg, n = 2) |> ungroup()
+```
+
+## Column Select Helpers
+
+```{r}
+# Type-based select
+sel_numeric <- df |> select(where(is.numeric))
+
+# Pattern-based select
+sel_patterns <- df |> select(starts_with("c"), ends_with("p"), contains("ar"))
+
+# Reorder with everything()
+sel_everything <- df |> select(-drat, everything())
+```
+
+## Joins
+
+```{r}
+# Key table for joins
+key <- tibble(cyl = c(4, 6, 8),
+              cyl_label = c("four", "six", "eight"))
+
+j_left  <- df |> left_join(key, by = "cyl")
+j_inner <- df |> inner_join(key, by = "cyl")
+
+df1 <- data.frame(name = c("John", "Paul", "Mick"), band = c("Beatles", "Beatles", "Stones"))
+df2 <- data.frame(name = c("John", "Paul"), instrument = c("Guitar", "Bass"))
+
+# Semi join: Keep rows in df1 where 'name' matches in df2
+semi_join(df1, df2, by = "name")
+
+df1 <- data.frame(
+id = c(1, 2, 3, 4),
+value = c(10, 20, 30, 40)
+)
+df2 <- data.frame(
+id = c(2, 4),
+value = c(20, 40)
+)
+anti_join(df1, df2, by = "id")
+```
+
+## Bind Rows / Bind Cols
+
+```{r}
+# Create two compatible tables
+df_A <- df |> select(model, mpg, cyl) |> mutate(src = "A")
+df_B <- df |> select(model, mpg, cyl) |> mutate(src = "B") |> slice_sample(n = 10)
+
+# Stack rows
+b_rows <- bind_rows(df_A, df_B)
+
+# Bind columns (must align by row order)
+b_cols <- bind_cols(df |> select(model, mpg), df |> select(hp, wt))
+```
+
+
+## Group Manipulation 
+
+```{r}
+mtcars %>% 
+  group_by(cyl) %>% 
+  summarise(N=n(), Mean = mean(hp))
+```
+
+```{r}
+mtcars |>
+  group_by(cyl) |>
+  summarise(N=n(), Mean = mean(hp))
+```
+
