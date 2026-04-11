@@ -1,0 +1,741 @@
+---
+title: "Lesson 5"
+author: "Lusine Zilfimian"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(dplyr, ggplot2, chron, stringr)
+```
+
+# Contents
+
+ * Basic Visualization (base R graphics or traditional R graphics)
+ * ggplot
+
+# Basic Plotting
+
+ *  Overview of the `plot()` function 
+ * `ggplot2` -  a powerful library for visualizing data in R
+
+## Base R graphics or traditional R graphics
+
+* The R function `plot()` takes in two vectors—one vector of x locations and one vector of y locations—and opens a graphics device where it displays the result.
+
+```{r}
+year <- c(2014, 2015, 2016, 2017, 2018, 2019, 2020)
+energy_to_learn <- c(0.6, 0.5, 0.1, 0.7, 0.99, 0.5, 0.8) 
+
+plot(x = year, y = energy_to_learn)
+```
+
+
+ * Coordinates in the form of a *matrix*, with x values in the first column and the y values in the second columns 
+
+
+```{r}
+(mat <- cbind(year, energy_to_learn))
+plot(mat)
+```
+
+```{r}
+?plot
+```
+
+### Graphical parameters (type, main, xlab, ylab, col, pch, cex, lty, lwd, xlim, ylim)
+
+ * Specify a single character-valued option for the argument `type`
+
+```{r}
+plot(mat, type = "l") # lines only
+plot(mat, type = "p") # point only 
+plot(mat, type = "b") # both points and lines
+plot(mat, type = "o") # overploting points
+
+plot(mat, type = "h")
+plot(mat, type = "s")
+```
+
+ * Title and Axis Labels
+
+```{r}
+plot(mat) # by default
+
+plot(mat, type = "p", 
+     main = "The title \n with new line", 
+     xlab = "This is x", ylab = "This is y")
+```
+
+
+ *  Colors to make data much clearer by distinguishing factor levels or emphasizing important numeric limits, etc.
+
+ * Character string or integer value 
+
+```{r}
+colors()
+plot(mat, type = "b", main = "The title", xlab = "This is x", ylab = "This is y", 
+     col = "black")
+
+plot(mat, type = "b", main = "The title", xlab = "This is x", ylab = "This is y", 
+     col = "blue4")
+
+colors()[1:100]
+
+plot(mat, type = "b", main = "The title", xlab = "This is x", ylab = "This is y", 
+     col = 1) # black
+?plot
+plot(mat, type = "p", main = "The title", xlab = "This is x", ylab = "This is y",
+     col = c(1,2,3,4,5,6,7))
+
+plot(mat, type = "p", main = "The title", xlab = "This is x", ylab = "This is y", 
+     col = c(1,2,3))
+```
+
+```{r}
+plot(mat, type = "p", main = "The title", xlab = "This is x", ylab = "This is y", 
+     col = 2)
+```
+
+* `pch` - point character (1-25 or single character)
+* `cex` - character expansion (default is 1)
+
+```{r}
+plot(cbind(1:25, 1:25), type = "p", pch = 1:25, col = colors()[25:50], cex = 1) # 1-25
+
+plot(cbind(1:25, 1:25), type = "p", pch = "0", col = colors()[25:50], cex = 1:2)
+```
+
+ * Line and Point Appearances
+
+* `lty` - line type (1-6 or solid, dotted, dashed, etc.)
+* `ltw`- line width
+
+
+```{r}
+plot(mat, type ="b",
+     main = "Title", xlab = "", ylab = "", 
+     lty = 3, cex = 1.5, lwd = 2) 
+
+plot(mat, type ="b",
+     main = "Title", xlab = "", ylab = "", 
+     lty = "dashed", cex = 0.5, lwd = 1) 
+```
+
+ * Plotting Region Limits
+
+* By default R sets the range of each axis by using the range of the supplied x and y values (plus a small constant to pad a little area around the outermost points).
+
+```{r}
+plot(mat, type = "l", xlim = c(1,50)) # c(lower,upper)
+plot(mat, type = "l", xlim = c(2014,2021)) 
+plot(mat, type = "l", ylim = c(0,2)) 
+```
+
+ * Adding Points, Lines, and Text to an Existing Plot 
+ * `points()`, `abline()`, `segments()`, `legend()`, `text()`, `arrows()`
+ * This functions will add to a plot *without* refreshing or clearing the window
+
+```{r}
+plot(mat,  ylim = c(0,2), xlim = c(2014, 2021))
+lines(x = mat + 1, type = "l")
+```
+
+```{r}
+plot(mat, ylim = c(0,2), xlim = c(2014, 2019))
+points(x = mat + 1, type = "p", col = 2)
+```
+
+```{r}
+plot(mat, ylim = c(0,2), xlim = c(2014, 2019), type = "l")
+abline(h = 0.4)
+```
+
+```{r}
+plot(mat, ylim = c(0,2), xlim = c(2014, 2019), type = "l")
+abline(v = 2016, lty = 2, col = "red")
+```
+
+```{r}
+plot(x = c(0,1,2,3,4), y = c(0,2,4,5,10), type = "l")
+abline(a = 0, b = 10/4, lty = 2, col = "red")
+```
+
+ * The `segments()` command takes a *from* coordinate (given as x0 and y0) and
+a *to* coordinate (as x1 and y1) and draws the corresponding line.
+ * `points()` takes two vectors of equal lengths with x and y values.
+ * `arrow()` just like segments, where you provide a *from* coordinate (x0, y0) and a *to* coordinate (x1, y1)
+ * As per the default behavior of `text()`, the string supplied as labels is *centered*
+on the coordinates provided with the arguments x and y.
+
+ 
+```{r}
+plot(mat, ylim = c(0,2), xlim = c(2014, 2020), type = "l")
+abline(h = c(0.1,1), col = "red", lty = 2,lwd = 2)
+segments(x0 = c(2015, 2017),
+         y0 = c(0.1, 0.1),
+         x1 = c(2015, 2017),
+         y1 = c(1, 1),
+         col = "blue", lty = 3, lwd = 2)
+arrows(x0 = 2015, y0 = 1.2, x1 = 2015.7, y1 = 0.3)
+text(x = 2016.5, y = 1.3, labels = "Productivity Level: Low")
+points(x = mat[,1][mat[,2] == 0.1],
+       y = mat[,2][mat[,2] == 0.1], 
+       pch = 19, cex =2, col = "green")
+legend( "topright", #bottomleft, "topleft"
+  legend = c("minmax", "2015-2017", "break"),
+  pch = c(NA, NA, 19),
+  lty = c(2, 3, NA), 
+  col = c("red", "blue", "green"), 
+  lwd = c(2, 2, NA))
+```
+
+## GGplot
+
+ * Visualization with GGplot2
+ 
+\tiny [Grammar of Graphics]{https://ggplot2.tidyverse.org/} 
+
+* Base plotting is fast and simple for quick plots; ggplot2 is more powerful, consistent, and scalable for complex or professional visualizations.
+
+# Ggplot - powerful alternatives to the standard plotting procedures in R written by Hadley Wickham.
+
+ * Start by installing the ggplot2 package by calling `install.packages("ggplot2")`
+ * Then load it `library(ggplot2)`
+ * `ggplot2` functions like data in the *long* format (a column for every dimension, and a row for every observation)
+ * Basic syntax of `qplot` is the same as earlier
+ 
+ 
+```{r}
+year <- c(2014, 2015, 2016, 2017, 2018, 2019, 2020)
+energy_to_learn <- c(0.6, 0.5, 0.1, 0.7, 0.99, 0.5, 0.8) 
+(mat <- cbind(year, energy_to_learn))
+
+library(ggplot2)
+qplot(x = mat[,1], y = mat[,2])
+qplot(x = mat[,1], y = mat[,2], main = "Name", xlab = "X", ylab = "Y")
+```
+
+
+ * In `plot()`  we treated the graphics device as an *active canvas* where we added points, lines, and other features one by one.
+ * *By contrast*, ggplot2 plots are stored as objects
+
+```{r}
+basic.plot <- plot(mat)
+basic.plot # Since nothing is actually stored in the workspace
+
+ggplot.plot <- qplot(x = mat[,1], y = mat[,2])
+ggplot.plot
+```
+
+ * It opens up new ways to *modify or enhance* plots before displaying them
+
+
+## How to build `ggplot` graphs:
+
+ * `ggplot` graphics are built step by step by adding new elements
+ * Elements of Grammar of graphics
+
+ - **Data** - The data-set being plotted
+ - **Aesthetics** - The scales onto which we plot our data (also, appearance and location)
+ - **Geometry** - The visual elements used for our data
+ - **Facet** - Groups by which we divide the data
+ 
+```
+ggplot(data = <DATA>, mapping = aes(<MAPPINGS>)) +  <GEOM_FUNCTION>()
+
+```
+
+
+```{r}
+??geom
+df.mat <- data.frame(V1 = mat[,1], V2 = mat[,2])
+
+df.mat %>%
+  ggplot() # to indicate that we want to create a plot.
+```
+
+### Building the *Axes*
+ 
+- The next *layer* that we need to establish are the axes.
+- In order to specify the axes, we need to use the `aes()` (aesthetic) function
+- `aes()` is where we tell ggplot what columns we want to use
+
+```{r}
+df.mat %>%
+  ggplot(aes(x = V1, y = V2))
+
+# The same as
+ggplot(data = df.mat, mapping = aes(x = V1, y = V2))
+```
+
+### Specifying *Geoms*
+
+ - Setting Appearance Constants with `Geoms` - geometric modifiers:
+ 
+ - `geom_line()` creates a line graph
+ - `geom_point()` creates a scatter plot
+ - `geom_bar()` creates a bar plot
+ - etc.
+
+
+
+ - We start to add *more layers* to it using a `+` sign
+
+
+ * Simple scatterplot
+
+```{r}
+#??geom
+df.mat %>%
+ggplot(mapping = aes(x = V1, y = V2)) + 
+  geom_point()
+
+# Or just
+ggplot(data = df.mat, aes(x = V1, y = V2)) + 
+  geom_point()
+
+# Connect by line
+ggplot(data = df.mat,mapping = aes(x = V1, y = V2)) + 
+  geom_point() +
+  geom_line(data = df.mat %>% filter(V1 < 2019), mapping = aes(x = V1, y = V2))
+```
+
+ * Be careful with the position of `+` sign
+ 
+```{r}
+ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+  geom_point() 
+  + geom_line()
+```
+
+ * Anything you put in the `ggplot()` function can be seen by any `geom` layers that you add (i.e., these are *universal plot* settings).
+ 
+ * You can also specify aesthetics for a given `geom` *independently* of the aesthetics defined globally in the `ggplot()` function.
+ 
+```{r}
+df.mat %>% 
+  ggplot() + 
+    geom_point(aes(x = V1, y = V2))+ 
+    geom_line(aes(x = V1, y = V2))
+```
+ 
+
+
+### Adding a Title and Axis Labels
+
+ - Graph keeps the column names as the labels for both of the axes.
+ - To change the *axis labels* for a plot, we can use the `labs()` function and add it as a *layer* onto the plot
+ - `labs()` can change *both* the *axis* labels as well as the *title* 
+
+```{r}
+df.mat %>%
+ggplot(aes(x = V1, y = V2)) + 
+  geom_point() +
+  geom_line() +
+  labs( title = "Energy to learn from 2014 to 2020", 
+        y = "Energy to learn", 
+        x = "Year")
+```
+
+ * pch - shape
+ * cex - size
+
+ * No need to adjust limits:
+
+```{r}
+ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+  geom_point() +
+  geom_line() +
+  geom_point(aes(x = 2022, y = 2), size = 5, shape = 7)
+```
+
+
+```{r}
+# compatible
+ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+  geom_point(cex = 3, pch = 6, color = "blue") + 
+  geom_line(color = "red", lty = 2)
+
+ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+  geom_point(alpha = 0.5, size = 3, color = "coral")
+```
+
+ * No longer requires to rerun every plotting command - just store and reuse
+
+```{r}
+(plot.one <- ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+            geom_line(color = "darkgreen", linetype = 2))
+
+plot.one + geom_point(size = 3, shape = 6, color = "coral") 
+plot.one + geom_point(size = 4, shape = 1, color = "coral") 
+```
+
+ 
+ * If you split a data set into categories using a *factor* object, `ggplot2` can *automatically* apply particular styles to different categories. 
+
+```{r}
+df.mat
+df.mat$V3 <- c("H", "L", "M")[sample(x = 3, size = 7, replace = T)]
+df.mat$V3 <- factor(df.mat$V3)
+
+plot(x = df.mat$V1, y = df.mat$V2, pch = df.mat$V3)
+
+ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+            geom_point(aes(shape = V3), size = 2)
+```
+
+```{r}
+plot(mat, ylim = c(0,2), xlim = c(2014, 2020), type = "l")
+abline(h = c(0.1,1), col = "red", lty = 2,lwd = 2)
+segments(x0 = c(2015, 2017),
+         y0 = c(0.1, 0.1),
+         x1 = c(2015, 2017),
+         y1 = c(1, 1),
+         col = "blue", lty = 3, lwd = 2)
+arrows(x0 = 2015, y0 = 1.2, x1 = 2015.7, y1 = 0.3)
+text(x = 2016.5, y = 1.3, labels = "Productivity Level: Low")
+points(x = mat[,1][mat[,2] == 0.1],
+       y = mat[,2][mat[,2] == 0.1], 
+       pch = 19, cex =2, col = "green")
+legend( "topright", #bottomleft, "topleft"
+  legend = c("minmax", "2015-2017", "break"),
+  pch = c(NA, NA, 19),
+  lty = c(2, 3, NA), 
+  col = c("red", "blue", "green"), 
+  lwd = c(2, 2, NA))
+```
+
+```{r}
+df.mat$V3 <- factor(c("good", "good", "break", "good", "good", "good", "good"))
+# The same plot
+ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+            geom_point(aes(shape = V3, color = V3), size = 2)+
+  geom_line(color = "black", lty = 2) + 
+  geom_hline(yintercept = c(0.1,1), color="red") + 
+  geom_segment(x = 2015, y = 0.1, xend = 2015, yend = 1, color = "red", linetype = 3) +
+  geom_segment(x = 2017, y = 0.1, xend = 2017, yend = 1, color = "red", linetype = 3)
+```
+
+ * Zoom in
+ 
+```{r}
+ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+  geom_point()+
+  scale_x_continuous(limits = c(2015, 2019)) +
+  scale_y_continuous(limits = c(0, 0.5)) 
+```
+ 
+
+ * Categorical for color should be factor variable
+  - `factor(gear)` will determine the size of the dots.  
+  -  `factor(carb)` will determine the color of the dots
+
+```{r}
+mtcars %>%
+  ggplot(aes(x = mpg, y = disp, col = gear)) +
+  geom_point()
+
+summary(mtcars)
+
+mtcars %>%
+  ggplot(aes(x = mpg, y = disp, col = factor(gear))) +
+  geom_point()
+
+mtcars %>%
+  ggplot(aes(x = mpg, y = disp, col = factor(carb), size = factor(gear))) +
+  geom_point()
+```
+
+ * Using `Facets` in ggplot2
+ 
+ - Facet is a way in which you can add additional categorical variables to your plot.  
+ - The facet helps in building the chart by dividing the data into two or more *groups*.
+ - Use tilder(`~`)
+
+```{r}
+ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+            geom_point( size = 2)+
+  geom_line(color = "black", lty = 2) + 
+  facet_grid(.~V3)
+
+
+ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+            geom_point(aes(shape = V3, color = V3), size = 2)+
+  geom_line(color = "black", lty = 2) + 
+  facet_grid(V3~.)
+```
+
+
+
+```{r}
+plot.two <- ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+            geom_point(aes(shape = V3, color = V3), size = 2) +
+            geom_line(color = "black", lty = 2) + 
+            theme(legend.position = "None")
+
+
+plot.three <- plot.two + 
+              labs(caption = paste( "* Note 1: Add text ",
+                       "\n** Note 2: Text here.",
+                       "\n*** Note: ", paste(nrow(df.mat), "rows")))
+
+plot.three
+
+plot.three + theme(plot.caption = element_text(hjust = 0,  face = "italic", size = 6.5))
+```
+
+
+### Other plots on real data
+
+#### Bar plot
+ 
+```{r}
+load("Lesson 5.rda")
+covid.subset
+
+(g1 <- covid.subset  %>% 
+      ggplot(mapping = aes(x = Q8.1.SourceEval)) +
+      geom_bar())
+
+cat(str_wrap("Some long string", width = 0.5))
+cat(str_wrap("Some long string", width = 1))
+cat(str_wrap("Some long string", width = 9))
+
+(g2 <- g1 +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 15)))
+```
+
+ * Use the `fill` attribute in the `geom_bar()` function to give the bar plot a color.
+ 
+```{r}
+# Bar colors
+covid.subset  %>% 
+      ggplot(mapping = aes(x = Q8.1.SourceEval)) +
+      geom_bar(fill = "darkgreen") +
+      scale_x_discrete(labels = function(x) str_wrap(x, width = 15))
+
+covid.subset  %>% 
+      ggplot(mapping = aes(x = Q8.1.SourceEval, fill = Q8.1.SourceEval)) +
+      geom_bar() +
+      scale_x_discrete(labels = function(x) str_wrap(x, width = 15))
+
+
+covid.subset$Q8.1.SourceEval <- DescTools::reorder.factor(covid.subset$Q8.1.SourceEval, new.order = c(2:4,1))
+
+covid.subset  %>% 
+      ggplot(mapping = aes(x = Q8.1.SourceEval, fill = Q8.1.SourceEval)) +
+      geom_bar() + 
+      scale_x_discrete(labels = function(x) str_wrap(x, width = 15)) +
+  theme(legend.position = "None")
+```
+
+
+ * Pallet
+ 
+```{r}
+covid.subset  %>% 
+      ggplot(mapping = aes(x = Q8.1.SourceEval, fill = Q8.1.SourceEval)) +
+      geom_bar() +
+      scale_x_discrete(labels = function(x) str_wrap(x, width = 15)) +
+      scale_fill_brewer(palette = "Accent")
+```
+
+[RBrewColor Pallet chart](Lesson 5.png)
+
+
+```{r}
+library(RColorBrewer)
+head(brewer.pal.info[1:2], 20)
+```
+
+See more in `wesanderson` package. 
+
+ * The attribute `position` is given as `fill`, i.e. we’ll get the bar plot in terms of proportion.
+
+```{r}
+covid.subset  %>% 
+      ggplot(mapping = aes(x = Q8.1.SourceEval, fill = Q2.Gender)) +
+      geom_bar() +
+      scale_x_discrete(labels = function(x) str_wrap(x, width = 15))
+
+# showing proportion instead of count
+(g3 <- covid.subset  %>% 
+      ggplot(mapping = aes(x = Q8.1.SourceEval, fill = Q2.Gender)) +
+      geom_bar(position = "fill") +
+      scale_x_discrete(labels = function(x) str_wrap(x, width = 15)))
+
+g3 + labs(fill = "Gender", x = "Source Evaluation", y = "")
+
+# Dodge comparison
+(g4 <- covid.subset  %>% 
+      ggplot(mapping = aes(x = Q8.1.SourceEval, fill = Q3.Age_group)) +
+      geom_bar(position = "dodge") +
+      scale_x_discrete(labels = function(x) str_wrap(x, width = 15)))
+```
+
+
+ *  Combine graphs with `grid.arrange` from `gridExtra` 
+ 
+```{r fig.width=10}
+# First task
+gridExtra::grid.arrange(g3, g4, ncol = 2)
+``` 
+
+ * `coord_cartesian()` - default coordinate system in ggplot2
+ * `coord_flip()` - for horizontal graphs
+
+```{r fig.width=8}
+g4 + facet_grid(.~Q2.Gender)
+g4 + facet_grid(.~Q2.Gender) + coord_cartesian()
+
+g4 + facet_grid(Q2.Gender~.)
+g4 + facet_grid(Q2.Gender~.) + coord_flip()
+g4 + facet_grid(~Q2.Gender) + coord_flip()
+```
+
+```{r}
+g4 + facet_grid(Q17.Mental~Q2.Gender, scales = "free_y") 
+```
+
+
+* Support for *statistical transformation* in ggplot and *themes*
+ 
+```{r}
+covid.subset  %>% 
+      ggplot(mapping = aes(x = Q8.1.SourceEval)) +
+      stat_count(fill = "darkgreen") +
+      scale_x_discrete(labels = function(x) str_wrap(x, width = 15))
+
+covid.subset  %>% 
+      ggplot() +
+      geom_bar(aes(x = Q8.1.SourceEval, y = ..prop.., group = 1), fill = "darkgreen") +
+      scale_x_discrete(labels = function(x) str_wrap(x, width = 15))
+
+ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+            geom_point()+
+            geom_line(color = "black", lty = 2) + 
+            stat_smooth(method = "lm", se = F)
+
+ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+            geom_point()+
+            geom_line(color = "black", lty = 2) +
+            geom_hline(yintercept = mean(df.mat$V2))
+```
+
+```{r}
+library(gridExtra)
+tm <- ggplot(data = df.mat, mapping = aes(x = V1, y = V2)) + 
+            geom_point()
+
+grid.arrange(tm + theme_bw(), 
+             tm + theme_linedraw(),
+             tm + theme_dark(),
+             tm + theme_minimal(),
+             tm + theme_classic(),
+             tm + theme_gray(),
+             ncol = 3, nrow = 2)
+```
+ 
+#### Boxplot
+
+ - A box plot can be created by using `geom_boxplot()`
+ 
+```{r}
+airquality  
+
+(g5 <- airquality  %>% 
+      ggplot(mapping = aes(x = Month, y = Temp)) +
+      geom_boxplot())
+
+(g5 <- airquality  %>% 
+      ggplot(mapping = aes(x = factor(Month), y = Temp)) +
+      geom_boxplot())
+
+tapply(airquality$Temp, airquality$Month, mean)
+
+airquality$HalfMonth <-  ifelse(airquality$Day > 15, "first", "second")
+# Second task
+(g5.1 <- airquality  %>% 
+      ggplot(mapping = aes(x = factor(Month), y = Temp, fill = factor(HalfMonth))) +
+      geom_boxplot())
+
+g5 +
+  geom_jitter() # have a better idea of the number of points
+
+
+g5 +
+  geom_jitter(alpha = 0.2, color = "tomato") 
+
+# interactive plots
+plotly::ggplotly(g5)
+```
+
+#### Line Plot
+
+ * Make X-axis as Date
+ 
+```{r}
+theme_set(theme_classic())
+library(readxl)
+UR.gender <- read_excel("Lesson 5.xlsx", sheet = 2)
+
+UR.gender %>% 
+  filter(Metric != "Total") %>%
+  mutate(Year = as.Date(paste(Year, "01-01", sep = "-"))) %>%
+  ggplot(aes(x = Year, y = UR , col = Metric)) + 
+  geom_line(size = 1)+
+  theme(legend.position = "bottom") + labs(col = "")+
+  ggtitle("Fig ??: Unemployment rate by gender")
+```
+
+```{r}
+UR.marz <- read_excel("Lesson 5.xlsx", sheet = 3)
+
+UR.marz <- UR.marz %>% tidyr::gather(Year, Unemployment,  -Region) %>% arrange(Region, Year)
+UR.marz$Year <- as.Date(paste(UR.marz$Year, "01-01", sep = "-"))
+
+
+UR.marz %>% ggplot(aes(x = Year, y = Unemployment , col = Region)) + 
+  geom_line(size = 1)
+
+
+UR.marz.lab <- UR.marz[UR.marz$Year=="2018-01-01", ]
+
+UR.marz %>% ggplot(aes(x = Year, y = Unemployment , col = Region)) + 
+  geom_line(size = 1) +
+  geom_text(data = UR.marz.lab, mapping = aes(label = Region), color = "black", size = 3) + 
+  ggtitle("Fig #??: Unemployment rate by marzes (2012-2019)")+
+  ylab("%") + xlab("Year") + theme(legend.position = "None")
+
+# Task 4
+# Or Faceting
+UR.marz %>% ggplot(aes(x = Year, y = Unemployment , col = Region)) + 
+  geom_line(size = 1) + theme(legend.position = "None")+
+  facet_wrap(~Region)
+```
+
+
+#### Correlogram and save plots
+
+```{r}
+theme_set(theme_gray())
+# Correlation matrix
+corr <- round(cor(mtcars), 1)
+
+# Plot
+library(ggcorrplot)
+ggcorrplot(corr, title = "Correlogram of mtcars")
+
+g1 <- ggcorrplot(corr, 
+           type = "lower", 
+           lab = TRUE, 
+           lab_size = 3, 
+           method = "circle", 
+           colors = c("tomato2", "white", "springgreen3"), 
+           title = "Correlogram of mtcars", 
+           ggtheme=theme_bw)
+
+getwd()
+ggsave(filename = "Lesson-5-Plot-1.png", plot = g1)
+```
