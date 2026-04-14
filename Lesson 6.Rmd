@@ -1,0 +1,785 @@
+---
+title: "Lesson 6"
+author: "Lusine Zilfimian"
+date: |
+     `r format(Sys.time(), '%B %d (%A),  %Y')`
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, error = F)
+pacman::p_load(dplyr, ggplot2, chron, stringr, plotly, ggcorrplot, ggthemes, shiny, shinydashboard)
+```
+
+
+# Short Description
+
+Shiny lets you turn R code and analyses into web apps (dashboards, tools, reports) where users can interact through sliders, buttons, dropdowns, tables, and plots, and see results update instantly
+
+**Mastering R Shiny by Hadley Wickham**
+
+# Building web applications with shiny
+
+  * Shiny is an R *package* that makes it easy to build **interactive** web apps
+  * [Cheat Sheet](https://www.rstudio.org/links/shiny_cheat_sheet)
+  * [Shiny](https://shiny.rstudio.com/)
+  * Watch out for commas!:)
+  * Examples: Contests, Kobotoolbox, Tickets, Time Series Survey,  Your Grades dashboard, Personal use...
+  
+```{r}
+browseURL("Examples")
+browseURL("Examples")
+browseURL("Examples")
+```
+
+## App directory structure
+
+myApp/
+├── app.R
+├── DESCRIPTION
+└── README.md   (optional)  
+
+```  
+Title: My Shiny App
+Author: Your Name
+DisplayMode: Showcase
+```
+
+File must be named exactly DESCRIPTION
+No .txt extension
+Placed in the same folder as app.R
+
+
+## Installing
+
+First install the shiny library 
+
+```{r}
+# install.packages("shiny")
+library(shiny)
+```
+
+ * ui.R `ui <- fluidPage()`. User interface: input defined + outputs laid out: Titles, text input, radio buttons, drop-down menus, graphs, etc.
+ 
+ * server.R **server <- function(input, output){}**. Output calculated and any other calculations needed to run the app. Set of instructions that produce the required output which further displayed by `ui.r` script.
+ 
+ * `shinyApp (ui = ui, server = server)` to Run the app
+ 
+ * Each app will need its own unique directory (or folder).
+ 
+ * Your R session will be busy while running a Shiny app, so you will not be able to run any R commands while the Shiny app is running.
+
+## Examples 
+ 
+  * "02_text" - tables and data frames
+  * "03_reactivity" - a reactive expression
+  * "04_mpg" - global variables
+  * "05_sliders" - slider bars
+  * "06_tabsets" - tabbed panels
+  * etc.
+
+```{r}
+#?runExample
+runExample()
+runExample("01_hello") 
+system.file("examples", package = "shiny")
+
+list.files(
+  system.file("examples", package = "shiny")
+)
+
+runExample("01_hello", display.mode = "showcase") # for learning, teaching, and debugging
+browseURL("https://github.com/rstudio/shiny-examples")
+```
+ 
+```{r}
+ui <- fluidPage(
+  h3("fluidPage"),
+  plotOutput("p")
+)
+
+server <- function(input, output) {
+  output$p <- renderPlot({
+   x    <- faithful[, 2]
+   bins <- seq(min(x), max(x), length.out = 50 + 1)
+   hist(x, breaks = bins, col = 'darkgray', border='black')})
+}
+shinyApp(ui, server, options = list(display.mode = "showcase"))
+```
+
+## Default shinyApp
+
+  Look at the default `shinyApp` and first run it. 
+  
+```{r}
+ui <- fluidPage(
+    titlePanel("Old Faithful Geyser Data"),
+    sidebarLayout( 
+        sidebarPanel( sliderInput("bins","Number of bins:",
+          min = 1,max = 50, value = 30) ),
+        mainPanel(plotOutput("distPlot"))
+                )
+)
+server <- function(input, output) {
+  output$distPlot <- renderPlot({
+   x    <- faithful[, 2]
+   bins <- seq(min(x), max(x), length.out = input$bins + 1)
+   hist(x, breaks = bins, col = 'darkgray', border='black')})
+}
+
+shinyApp(ui = ui, server = server)
+```
+- http://localhost:6679 (localhost means "this computer", IP address)
+- Port Number - the specific app (the Shiny app)
+
+* UI
+ 
+```{r}
+# 
+ui <- fluidPage(
+  titlePanel("New"),
+  sidebarLayout(
+    sidebarPanel(),
+    mainPanel()
+  )
+)
+
+server <- function(input, output){}
+
+shinyApp(ui=ui, server = server)
+```
+ 
+*  User interface: 
+
+```  
+fluidPage(
+  
+  sidebarLayout(
+         
+  * sidebarPanel()
+  * mainPanel()
+  
+   )
+  
+  )
+```  
+
+* Type of Inputs 
+
+```
+ sliderInput(  inputId = "mu",
+               label = "Mean of distribution:",
+               min = 1,
+               max = 100,
+               value = 50)
+```
+
+
+  * inputId – you will use this to refer to the input in server
+  * label – the label of the slider
+  * min, max – the minimum and maximum values that the mean can have
+  * value – the default value
+  
+- Suppose we are going to create histogram by changing the parameter for mean.
+  
+```{r}
+set.seed(2708)
+rn <- rnorm(n = 1000, mean = 10, sd = 15)
+ggplot() + geom_histogram(aes(x = rn), bins = 50)
+```
+  
+
+### Mean - adding changing mean
+  
+   `sliderInput` + `plotOutput` (`renderPlot`)
+  
+```{r}
+# ui
+ui1 <- fluidPage(
+    titlePanel("Normally distributed data"),
+    sidebarLayout(
+        sidebarPanel(
+            sliderInput(inputId = "mu", label = "The mean valu", min = 10, max = 100, value = 20)
+        ),
+        mainPanel( plotOutput("myhistogram") )
+    )
+)
+```
+
+
+
+```{r}
+# Server 
+server2 <- function(input, output) {
+
+    output$myhistogram <- renderPlot({
+      rn <- rnorm(n = 1000, mean = input$mu,  sd = 15)
+      ggplot() + geom_histogram(aes(x = rn), bins = 50)
+    })
+}
+shinyApp(ui = ui1, server = server2)
+```
+ 
+  * `server` takes the value for *mean* from `ui` 
+  * to specify input from `ui` use `input$'name` 
+  
+### SD
+
+  * Add another `sliderInput` for standard deviation
+
+```{r}
+# ui
+ui2 <- fluidPage(
+    titlePanel("Normally distributed data"),
+    sidebarLayout(
+        sidebarPanel(
+          sliderInput("mu", "Mean for distribution:", min = 1, max = 100, value = 50),
+          sliderInput("mysd", "SD for distribution:", min = 1, max = 100, value = 50)           
+                     ),
+        mainPanel( plotOutput("myhistogram") )
+    )
+)
+
+```
+
+```{r}
+# Server 
+server3 <- function(input, output) {
+
+    output$myhistogram <- renderPlot({
+      set.seed(2708)
+      rn <- rnorm(n = 1000, mean = input$mu, sd = input$mysd)
+      ggplot() + geom_histogram(aes(x = rn), bins = 50)
+    })
+}
+
+shinyApp(ui=ui2, server = server3)
+```
+
+
+### Size
+
+ * Add a *numeric input* for the sample size with min = 100, max = 10000
+ 
+ * `numericInput(inputId, label, value, min, max, step)`
+ 
+```{r}
+ui3 <- fluidPage(
+    titlePanel("Normally distributed data"),
+    sidebarLayout(
+        sidebarPanel(
+    sliderInput("mu", "Mean for distribution:",                 
+      min = 1, max = 100, value = 50),
+    sliderInput("mysd", "Standard deviation for distribution:",        
+          min = 5, max = 50, value = 40),
+    numericInput("sizeMy", "Select the size of data",min = 10, max = 100, value = 20, step = 0.5 )
+          ), mainPanel( plotOutput("myhistogram") )
+    ))
+
+```
+
+ ---
+
+```{r}
+# Server 
+server4 <- function(input, output) {
+
+    output$myhistogram <- renderPlot({
+      set.seed(2708)
+      rn <- rnorm(n = input$sizeMy, mean = input$mu, sd = input$mysd)
+      ggplot() + geom_histogram(aes(x = rn), bins = 50)
+    })
+}
+
+shinyApp(ui=ui3, server = server4)
+```
+
+
+-  Step 1: Add an R object to the UI 
+  
+  [Here are the shiny Widgets:](https://shiny.rstudio.com/gallery/widget-gallery.html)
+```{r}
+browseURL("https://shiny.rstudio.com/gallery/widget-gallery.html")
+browseURL("https://r-packages.io/packages/shinyWidgets")
+```
+
+  * Action button
+  * Single checkbox / Checkbox group
+  * Date input / Date range
+  * File input 
+  * Numeric input / Text input
+  * Radio buttons / Select box
+  * Slider / Slider range
+  * Help text 
+ 
+- Step 2: Create an action in server
+ 
+- Step 3: Return the output to Main Panel
+ 
+Shiny provides a family of functions that turn R objects into *output* for your user interface. Each function creates a specific type of output.
+  
+  * `imageOutput` - Image
+  * `plotOutput`  - Plot 
+  * `verbatimTextOutput` - Text
+  * `tableOutput` - Table 
+  * `dataTableOutput` - Data table
+  * etc.
+
+  ---
+  
+### Median
+
+  * Add median as a text on the Main Panel
+  
+```{r}
+uim <- fluidPage(
+    titlePanel("Normally distributed data"),
+    sidebarLayout(
+        sidebarPanel(
+    sliderInput("mu", "Mean for distribution:",                 
+      min = 1, max = 100, value = 50),
+    sliderInput("mysd","Standard dev for distribution:",        
+          min = 5, max = 50, value = 40),
+    numericInput(inputId = "sizeMy",label = "The size of data",
+         value = 1000, min = 100, max = 10000, step = 0.5)    
+          ), mainPanel( 
+            plotOutput("myhistogram"),
+            textOutput("median_of_data")
+           
+          )))
+```
+
+```{r}
+# Server 
+serverm <- function(input, output) {
+
+    output$myhistogram <- renderPlot({
+  set.seed(2708)
+  rn <- rnorm(n = input$sizeMy,mean=input$mu,sd=input$mysd)
+  ggplot() + geom_histogram(aes(x = rn), bins = 50)
+    })
+    
+   output$median_of_data <- renderText({
+  set.seed(2708)
+  rn <- rnorm(n = input$sizeMy,mean=input$mu,sd=input$mysd)
+  median(rn)
+   }) 
+}
+shinyApp(ui=uim, server = serverm)
+```
+
+
+## Reactive
+
+- Example related to spreadsheets
+
+ * In order to not repeat the code twice (or more) use reactive to make a reactive object, thus an object that reacts to user input
+ * If you use reactive object in later code, use `()` after object name, like `rn()`
+ * Thus this value will be recalculated only when inputs would change
+ 
+```{r}
+# Server 
+serverm2 <- function(input, output) { 
+  
+    set.seed(2708)
+  
+    rn <- reactive(rnorm(n = input$sizeMy,mean=input$mu,sd=input$mysd))
+  
+    output$myhistogram <- renderPlot({
+      ggplot() + geom_histogram(aes(x = rn()), bins = 50)})
+    output$median_of_data <- renderText(median(rn()))
+    }
+shinyApp(ui=uim, server = serverm2)
+```
+  
+## Text formating 
+
+   + `paste()` to add other text element
+   
+```{r}
+# Server 
+serverm3 <- function(input, output) {
+
+    set.seed(2708)
+    rn <- reactive(rnorm(n = input$sizeMy, mean = input$mu, sd = input$mysd))
+    
+    output$myhistogram <- renderPlot(
+      ggplot() + geom_histogram(aes(x = rn()), bins = 50)
+    )
+    output$median_of_data <- renderText(paste("This is the median of created data", median(rn())))
+    }
+shinyApp(ui=uim, server = serverm3)
+```
+
+  ---
+
+## Text formating 
+
+  * Use `html` headers (h1, h2, h3, etc) to change the size of the text (in *UI*!)
+  * `br()`, `p()`
+
+  
+```{r}
+uim2 <- fluidPage(
+    titlePanel("Normally distributed data"),
+    sidebarLayout(
+        sidebarPanel(
+    sliderInput("mu", "Mean for distribution:",                 
+      min = 1, max = 100, value = 50),
+    sliderInput("mysd","Standard dev. for distribution:",        
+          min = 5, max = 50, value = 40),
+    numericInput(inputId="sizeMy",label="The size of data",
+         value = 1000, min = 100, max = 10000, step = 0.5)    
+          ),
+         mainPanel( plotOutput("myhistogram"),
+                textOutput("median_of_data")
+          )))
+shinyApp(ui=uim2, server = serverm3)
+```
+  
+* Summary
+
+  Thus `render.()` function from server and `.Output()` from *UI* work together to add R output to the UI
+  
++-------------------+-------------------+-----------------+
+| Output function   |     Creates       | Render Function |
++===================+===================+=================+
+|verbatimTextOutput | any printed output|  renderPrint 	  |
++-------------------+-------------------+-----------------+
+|    plotOutput     |      plots        |   renderPlot    |
++-------------------+-------------------+-----------------+
+|    textOutput     | character strings |    renderText   |
++-------------------+-------------------+-----------------+
+
+Full list [here](https://shiny.rstudio.com/tutorial/written-tutorial/lesson4/)
+
+```{r}
+browseURL("https://shiny.rstudio.com/tutorial/written-tutorial/lesson4/")
+```
+
+  ---
+  
+# Task 1
+
+
+Hint:
+ * aes_string is used when you have quoted names (“x1” and not x1) 
+ (as the `input$` format from `selectInput` is a quoted tex)
+ 
+
+
+
+### Brush
+
+ * Select points on the plot via brushing, and report the selected points in a data table underneath the plot. 
+
+```{r}
+uiab <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(
+      selectInput(inputId = "first", label="X axis",
+               choices = colnames(anscombe),
+               selected = "x1"),
+      selectInput(inputId = "second", label="Y axis",
+               choices = colnames(anscombe),
+               selected = "y1")),
+    mainPanel(
+        plotOutput("scatterplot", brush = "nameofbrush"),
+        DT::DTOutput("summary"),
+        uiOutput("link"))))
+```
+
+```{r}
+serverab <- function(input, output){
+  output$scatterplot <- renderPlot({
+    ggplot(data=anscombe, aes_string(x=input$first,
+      y=input$second))+
+      geom_point(size = 2, alpha=0.5, col = "coral")+
+      geom_smooth(method = "lm", se = F)
+  })
+  output$summary <- renderDataTable({
+    brushedPoints(anscombe, input$nameofbrush)
+    })
+  
+  output$link <- renderUI({
+    
+  tagList(h3(a("Click on me", 
+    href="https://github.com/zilfimian", target="_blank")))
+    })
+  
+ }
+shinyApp(ui=uiab, server = serverab)
+```
+ 
+### Grid Layout
+
+ * Rows are created by the `fluidRow()` function and include columns defined by the `column()` function. 
+ * Column widths are based on the Bootstrap 12-wide grid system, so should add up to 12 within a `fluidRow()` 
+ * The sum of widths of the columns inside every row needs to be no more than 12
+ 
+
+  
+```{r}
+uia <- fluidPage(
+#  sidebarLayout( #  sidebarPanel(
+    fluidRow(
+      column(width = 1,  selectInput(inputId = "first", 
+        label="X axis",
+       choices = colnames(anscombe), selected = "x1")),
+     column(width = 1, selectInput(inputId = "second",
+       label="Y axis",
+        choices = colnames(anscombe), selected = "y1"))
+      ), #  <- Do not forget this comma    # mainPanel( 
+      fluidRow(
+        column(4, plotOutput("scatterplot")),
+        column(4, uiOutput("link")),
+        column(4, dataTableOutput("summary")))
+)
+shinyApp(ui=uia, server = serverab)
+```
+
+ 
+## Tabs
+
+ * in UI
+ * `tabsetPanel()` and `tabPanel()` can be used to allow multiple pages
+within the same app
+``` 
+ tabsetPanel(
+        tabPanel(),
+        tabPanel()
+        )
+```        
+
+```{r}
+uiatab <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(
+      selectInput(inputId = "first", label="X axis",
+         choices = colnames(anscombe), selected = "x1"),
+      selectInput(inputId = "second", label="Y axis",
+         choices = colnames(anscombe), selected = "y1"),
+      checkboxInput(inputId = "plots", label = "Show plot",
+        value = T)
+                ),
+    mainPanel(
+      tabsetPanel(
+        tabPanel("Plot", plotOutput("scatterplot")),
+        tabPanel("TBD", "Text"))
+      )))
+shinyApp(ui=uiatab, server = servera1)
+```
+
+ 
+# Shiny Dashboard
+
+```{r}
+# install.packages("shinydashboard")
+library(shinydashboard)
+```
+ 
+ * A dashboard has three parts: a **header**, a **sidebar**, and a **body**. Here’s the most minimal possible UI for a dashboard page.
+ 
+```{r}
+ui <- dashboardPage(
+  dashboardHeader(),
+  dashboardSidebar(),
+  dashboardBody()
+)
+server <- function(input, output) { }
+shinyApp(ui, server)
+```
+
+
+```{r}
+ui <- dashboardPage(
+  dashboardHeader(
+    title = h4("Here should be the name of dashboard")
+    ),
+  dashboardSidebar(),
+    dashboardBody()
+)
+
+server <- function(input, output) { }
+shinyApp(ui, server)
+```
+
+ * App user inputs are located in `dashboardSidebar`
+ * Output is in `dashboardBody`
+
+```{r, eval=F}
+ui <- dashboardPage(
+  dashboardHeader(
+    title = h4("Here should be the best dash ever")
+    ),
+  dashboardSidebar(
+    
+  sliderInput(inputId = "mu",
+                   label = "Mean for distribution:",
+                   min = 1,max = 100, value = 50),
+   sliderInput(inputId = "sd",
+                  label = "SD for distribution:",
+                   min = 5,max = 50, value = 40),
+  numericInput(inputId="sample", label = "Sample size",
+                    min=100, max=10000, value=1000)
+  
+  ),
+  
+  
+    dashboardBody(plotOutput("histogram"))
+)
+
+```
+ 
+
+ 
+```{r, eval=F}
+server <- function(input, output){
+  output$histogram <- renderPlot({
+    rn <- rnorm(n=input$sample, mean=input$mu, 
+      sd=input$sd)
+    ggplot()+geom_histogram(aes(x=rn), bins=50)
+  })}
+
+shinyApp(ui, server)
+
+```
+
+
+
+# Using shinyapps.io 
+
+When your app is deployed, the computer serving your app is a web server.
+
+Is free, but limited to 5 active applications 
+
+ 1. Register with [shinyapps.io](https://www.shinyapps.io/)
+ 2. Install the following package
+
+```{r, eval=F}
+#install.packages('rsconnect')
+```
+
+ 3. Login into your page on `shinyapps.io`
+ 4. Copy token and secret
+ 
+
+## More reactivity 
+
+* Imperative Versus Declarative Programming
+* Types of reactives in Shiny
+  - reactive values - `reactiveVal()`, `reactiveValues()`, `eventReactive` mutable state, return a value, 
+  - reactive expressions - `reactive()`  return a value, 
+  - reactive observers - `observe()`, `observeEvent()`
+
+
+* The main difference between observeEvent and observe being the trigger, as observe runs anytime anything changes, and observeEvent waits for the trigger.
+* `observeEvent` needs the user to make an action to run the function inside
+* `observe` evaluate as soon as their dependencies change, they schedule themselves to re-execute.
+
+
+* `Reactive expressions` use lazy evaluation; that is, when their dependencies change, they don't re-execute right away but rather wait until they are called by someone
+* `eventReactive` Create a variable, with a defined trigger similar to observeEvent. Use this when you want a reactive variable that evaluates due to a trigger instead of when it is called.
+
+```{r}
+# Source - https://stackoverflow.com/a/53016939
+
+library(shiny)
+
+ui<-
+ fluidPage(
+   fluidRow(
+     column(4,
+      h2("Reactive Test"),
+      textInput("Test_R","Test_R"),
+      textInput("Test_R2","Test_R2"),
+      textInput("Test_R3","Test_R3"),
+      tableOutput("React_Out")
+    ),
+     column(4,
+      h2("Observe Test"),
+      textInput("Test","Test"),
+      textInput("Test2","Test2"),
+      textInput("Test3","Test3"),
+      tableOutput("Observe_Out")
+    ),
+    column(4,
+      h2("Observe Event Test"),
+      textInput("Test_OE","Test_OE"),
+      textInput("Test_OE2","Test_OE2"),
+      textInput("Test_OE3","Test_OE3"),
+      tableOutput("Observe_Out_E"),
+      actionButton("Go","Test")
+    )
+
+    ),
+  fluidRow(
+    column(8,
+    h4("Note that observe and reactive work very much the same on the surface,
+       it is when we get into the server where we see the differences, and how those
+       can be exploited for diffrent uses.")
+  ))
+  
+  )
+
+server<-function(input,output,session){
+
+# Create a reactive Evironment. Note that we can call the varaible outside same place
+# where it was created by calling Reactive_Var(). When the varaible is called by
+# renderTable is when it is evaluated. No real diffrence on the surface, all in the server.
+  
+Reactive_Var<-reactive({c(input$Test_R, input$Test_R2, input$Test_R3)})
+
+output$React_Out<-renderTable({
+  Reactive_Var()
+  })
+
+# Create an observe Evironment. Note that we cannot access the created "df" outside 
+# of the env. A, B,and C will update with any input into any of the three Text Feilds.
+observe({
+  A<-input$Test
+  B<-input$Test2
+  C<-input$Test3
+  df<-c(A,B,C)
+  output$Observe_Out<-renderTable({df})
+  })
+
+#We can change any input as much as we want, but the code wont run until the trigger
+# input$Go is pressed.
+observeEvent(input$Go, {
+  A<-input$Test_OE
+  B<-input$Test_OE2
+  C<-input$Test_OE3
+  df<-c(A,B,C)
+  output$Observe_Out_E<-renderTable({df})
+})
+
+}
+shinyApp(ui, server)
+
+```
+- reactive
+Create a variable that can be changed over time by user inputs, evaluates "lazy" meaning only when called.
+- observe
+Continually monitor reactive events and variables, whenever ANY reactive variable is changed in the environment (the observed environment), the code is evaluated. Can change values of previously defined reactive variables, cannot create/return variables.
+- observeEvent (Domino Effect)
+Continually monitor ONE defined reactive variable/event (the trigger) and run the code when the trigger is activated by change/input of that trigger. Can change values of previously defined reactive variables, cannot create/return variables.
+- eventReactive
+Create a variable, with a defined trigger similar to observeEvent. Use this when you want a reactive variable that evaluates due to a trigger instead of when it is called.
+
+ 
+## Tips 
+
+ * If you have a data file to be used for the shiny app, put it in the app folder. 
+ * If planning to use an external file, call them  
+ * Don’t forget to upload the data file into server too
+ * No need to install libraries, just call them
+ 
+  
+##  Other important/fun stuff 
+
+ * IGV [plotly](https://plot.ly/r/) 
+ * Shiny [gallery](https://shiny.rstudio.com/gallery/)
+ * [Shiny App](https://adminlte.io/themes/AdminLTE/pages/calendar.html)  
+  
+
